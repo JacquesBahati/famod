@@ -1,0 +1,10 @@
+/* Empêche Google d'injecter un décalage blanc en haut de page */
+body {
+  top: 0px !important;
+  position: static !important;
+}
+
+.goog-text-highlight {
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
