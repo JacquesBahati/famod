@@ -10,9 +10,9 @@ export default function Contact() {
   const whatsappUrl = `https://wa.me/${rawPhoneNumber}?text=${encodeURIComponent(defaultWhatsAppMessage)}`;
 
   // 2. Configuration Email / Gmail
-  const emailAddress = "famillemodele206@gmail.com"; // ⚠️ Remplace par ton adresse réelle
+  const emailAddress = "famillemodele2026@gmail.com"; // ⚠️ Remplace par ton adresse réelle
   const emailSubject = "Demande d'information - FAMOD";
-  const defaultEmailBody = "Bonjour l'équipe FAMOD,\n\nJe souhaite obtenir plus d'informations concernant votre ministère et vos activités.";
+  const defaultEmailBody = "Bonjour l'équipe FAMOD, \n \n Je viens de visiter votre site (famod.vercel.app) et je souhaite obtenir plus d'informations concernant votre ministère ainsi que vos activités. \n\n Pourriez-vous m'en dire plus ? Merci !";
 
   // Lien direct Web Gmail (ouvre l'onglet d'envoi Gmail directement dans le navigateur)
   const gmailWebUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${emailAddress}&su=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(defaultEmailBody)}`;

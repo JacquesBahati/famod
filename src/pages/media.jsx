@@ -45,177 +45,23 @@ const scaleIn = {
 
 // --- DATA MEDIAS INITIALES (FALLBACK) ---
 const initialArcMediaCards = [
-  {
-    id: 'arc-1',
-    title: 'Familles en Réflexion',
-    category: 'Séminaire',
-    date: 'Mai 2024',
-    desc: 'Session interactive d’apprentissage et de partage pour les jeunes mariés.',
-    img: coeur,
-    rotation: 18,
-    translateY: 25,
-  },
-  {
-    id: 'arc-2',
-    title: 'Sourires & Communion',
-    category: 'Communion',
-    date: 'Avril 2024',
-    desc: 'Un moment d’échange chaleureux lors de la retraite annuelle des couples.',
-    img: 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&q=80&w=800',
-    rotation: 10,
-    translateY: 10,
-  },
-  {
-    id: 'arc-3',
-    title: 'Dialogue & Écoute',
-    category: 'Atelier',
-    date: 'Mars 2024',
-    desc: 'Restaurer la communication saine au sein du foyer avec nos conseillers.',
-    img: Atelier,
-    rotation: 0,
-    translateY: 0,
-  },
-  {
-    id: 'arc-4',
-    title: 'Conférence FAMOD',
-    category: 'Événement',
-    date: 'Février 2024',
-    desc: 'Enseignements et partages bibliques sur l’épanouissement conjugal.',
-    img: evenement,
-    rotation: -10,
-    translateY: 10,
-  },
-  {
-    id: 'arc-5',
-    title: 'Sortie des Couples',
-    category: 'Détente',
-    date: 'Janvier 2024',
-    desc: 'Temps de ressourcement en plein air pour fortifier les liens.',
-    img: 'https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&q=80&w=800',
-    rotation: -18,
-    translateY: 25,
-  },
+  
 ];
 const initialBentoMediaCards = [
-  {
-    id: 'bento-1',
-    title: 'Causerie Morale & Échanges',
-    subtitle: 'Moments d’interaction authentiques',
-    desc: 'Échanges ouverts autour des défis du mariage moderne et des solutions basées sur la Parole de Dieu.',
-    category: 'Ateliers',
-    date: 'Juin 2024',
-    img: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&q=80&w=1000',
-    gridSpan: 'md:col-span-2 md:row-span-2',
-  },
-  {
-    id: 'bento-2',
-    title: 'Accompagnement Personnalisé',
-    subtitle: 'Écoute active & Conseils',
-    desc: 'Des sessions privées avec nos conseillers conjugaux et thérapeutes.',
-    category: 'Suivi',
-    date: 'Mai 2024',
-    img: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&q=80&w=800',
-    gridSpan: 'md:col-span-1 md:row-span-1',
-  },
-  {
-    id: 'bento-3',
-    title: 'Planification et Projets',
-    subtitle: 'Bâtir l’avenir ensemble',
-    desc: 'Orientations pratiques pour la gestion du foyer, la finance du couple et l’éducation.',
-    category: 'Formation',
-    date: 'Avril 2024',
-    img: planification,
-    gridSpan: 'md:col-span-1 md:row-span-1',
-  },
-  {
-    id: 'bento-4',
-    title: 'Suivi de la Croissance Spirituelle',
-    subtitle: 'Un modèle pour les générations',
-    desc: 'Mesurer l’impact transformateur de FAMOD au cœur de la communauté.',
-    category: 'Témoignage',
-    date: 'Mars 2024',
-    img: 'https://images.unsplash.com/photo-1531545514256-b1400bc00f31?auto=format&fit=crop&q=80&w=1000',
-    gridSpan: 'md:col-span-2 md:row-span-1',
-  },
+ 
 ];
 const initialCarouselMediaCards = [
-  {
-    id: 'scroll-1',
-    title: 'Partage & Prière',
-    subtitle: 'Communion Spirituelle',
-    category: 'Prière',
-    date: 'Juillet 2024',
-    desc: 'Un moment d’intercession partagé pour les familles et le renforcement des foyers.',
-    img: 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?auto=format&fit=crop&q=80&w=800',
-  },
-  {
-    id: 'scroll-3',
-    title: 'Soirée de Gala Famille',
-    subtitle: 'Célébration & Joie',
-    category: 'Célébration',
-    date: 'Mai 2024',
-    desc: 'Une soirée festive pour honorer l’amour, l’engagement et la persévérance conjugale.',
-    img: 'https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?auto=format&fit=crop&q=80&w=800',
-  },
-  {
-    id: 'scroll-4',
-    title: 'Rencontre et Partage',
-    subtitle: 'Communion',
-    category: 'Atelier',
-    date: 'Avril 2024',
-    desc: 'Un moment convivial d’échange d’expériences.',
-    img: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&q=80&w=800',
-  },
+  
 ];
 const initialDriveList = [
-  {
-    id: 'drive-1',
-    title: 'Photos de la cérémonie du 09 août 2026',
-    url: 'https://drive.google.com/drive/folders/1abc_exemple_09aout',
-    date: '09 Août 2026',
-  },
-  {
-    id: 'drive-2',
-    title: 'Retraite Spirituelle de Mai 2026',
-    url: 'https://drive.google.com/drive/folders/1abc_exemple_mai2026',
-    date: '15 Mai 2026',
-  },
+
 ];
 const initialTeachingList = [
-  {
-    id: 'teach-1',
-    title: 'Fondements d’un Foyer Solide',
-    speaker: 'Pasteur & Intervenant FAMOD',
-    duration: '25 min',
-    desc: 'Un enseignement clé sur l’établissement de principes bibliques au sein du couple.',
-    videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-  },
-  {
-    id: 'teach-2',
-    title: 'La Communication dans le Mariage',
-    speaker: 'Équipe Conseillers FAMOD',
-    duration: '40 min',
-    desc: 'Des conseils pratiques pour désamorcer les conflits et exprimer ses besoins dans le respect.',
-    videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-  },
+  
 ];
 const initialTestimonialList = [
-  {
-    id: 'testi-1',
-    title: 'Témoignage de Restauration - Foyer Kabangu',
-    speaker: 'Famille Kabangu',
-    date: '09 Août 2026',
-    desc: 'Comment la grâce de Dieu a restauré l’amour et la paix au sein de notre foyer.',
-    videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-  },
-  {
-    id: 'testi-2',
-    title: 'Pardon et Réconciliation au Couple',
-    speaker: 'Frère Joseph & Sœur Marie',
-    date: '12 Juin 2026',
-    desc: 'Un témoignage fort sur la puissance du pardon conjugal.',
-    videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-  },
+  
+  
 ];
 
 export default function MediaSection() {

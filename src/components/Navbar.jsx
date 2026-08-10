@@ -50,7 +50,7 @@ export default function Navbar() {
       if (!auth.currentUser) {
         setIsAuthOpen(true);
       }
-    }, 65000); // 10 secondes
+    }, 95000); // 10 secondes
 
     return () => clearInterval(timer);
   }, []);
