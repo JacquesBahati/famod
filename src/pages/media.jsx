@@ -44,25 +44,12 @@ const scaleIn = {
 };
 
 // --- DATA MEDIAS INITIALES (FALLBACK) ---
-const initialArcMediaCards = [
-  
-];
-const initialBentoMediaCards = [
- 
-];
-const initialCarouselMediaCards = [
-  
-];
-const initialDriveList = [
-
-];
-const initialTeachingList = [
-  
-];
-const initialTestimonialList = [
-  
-  
-];
+const initialArcMediaCards = [];
+const initialBentoMediaCards = [];
+const initialCarouselMediaCards = [];
+const initialDriveList = [];
+const initialTeachingList = [];
+const initialTestimonialList = [];
 
 export default function MediaSection() {
   const [selectedMedia, setSelectedMedia] = useState(null);
@@ -95,6 +82,7 @@ export default function MediaSection() {
   const [newBentoTitle, setNewBentoTitle] = useState('');
   const [newBentoSubtitle, setNewBentoSubtitle] = useState('');
   const [newBentoCategory, setNewBentoCategory] = useState('');
+  const [newBentoGridSpan, setNewBentoGridSpan] = useState('md:col-span-1 md:row-span-1');
   const [newBentoDesc, setNewBentoDesc] = useState('');
   const [newBentoImg, setNewBentoImg] = useState('');
   const [newBentoImgPreview, setNewBentoImgPreview] = useState('');
@@ -108,6 +96,12 @@ export default function MediaSection() {
   const carouselContainerRef = useRef(null);
   const carouselTrackRef = useRef(null);
   const [dragConstraintWidth, setDragConstraintWidth] = useState(0);
+
+  // CONTRAINTES DRAG ARC PERSPECTIVE
+  const arcContainerRef = useRef(null);
+  const arcTrackRef = useRef(null);
+  const [arcDragConstraintWidth, setArcDragConstraintWidth] = useState(0);
+
   const [newCarTitle, setNewCarTitle] = useState('');
   const [newCarSubtitle, setNewCarSubtitle] = useState('');
   const [newCarCategory, setNewCarCategory] = useState('');
@@ -116,7 +110,7 @@ export default function MediaSection() {
   const [newCarImg, setNewCarImg] = useState('');
   const [newCarImgPreview, setNewCarImgPreview] = useState('');
 
-  // CALCUL CONTRAINTE DRAG CARROUSEL
+  // CALCUL CONTRAINTE DRAG CARROUSEL & ARC
   useEffect(() => {
     if (carouselContainerRef.current && carouselTrackRef.current) {
       const containerW = carouselContainerRef.current.offsetWidth;
@@ -124,6 +118,14 @@ export default function MediaSection() {
       setDragConstraintWidth(Math.max(0, trackW - containerW));
     }
   }, [carouselList]);
+
+  useEffect(() => {
+    if (arcContainerRef.current && arcTrackRef.current) {
+      const containerW = arcContainerRef.current.offsetWidth;
+      const trackW = arcTrackRef.current.scrollWidth;
+      setArcDragConstraintWidth(Math.max(0, trackW - containerW));
+    }
+  }, [arcList]);
 
   // ÉTATS GOOGLE DRIVE
   const [isDriveModalOpen, setIsDriveModalOpen] = useState(false);
@@ -172,26 +174,40 @@ export default function MediaSection() {
       const items = snapshot.docs.map((docSnap) => ({ ...docSnap.data(), id: docSnap.id }));
       setArcList([...initialArcMediaCards, ...items]);
     });
+
     const unsubBento = onSnapshot(collection(db, 'bentoMedia'), (snapshot) => {
-      const items = snapshot.docs.map((docSnap) => ({ ...docSnap.data(), id: docSnap.id }));
+      const items = snapshot.docs.map((docSnap, index) => {
+        const data = docSnap.data();
+        return {
+          ...data,
+          id: docSnap.id,
+          // Récupère gridSpan depuis Firestore, sinon applique une disposition alternée par défaut
+          gridSpan: data.gridSpan || (index % 3 === 0 ? 'md:col-span-2 md:row-span-1' : 'md:col-span-1 md:row-span-1'),
+        };
+      });
       setBentoList([...initialBentoMediaCards, ...items]);
     });
+
     const unsubCarousel = onSnapshot(collection(db, 'carouselMedia'), (snapshot) => {
       const items = snapshot.docs.map((docSnap) => ({ ...docSnap.data(), id: docSnap.id }));
       setCarouselList([...initialCarouselMediaCards, ...items]);
     });
+
     const unsubDrive = onSnapshot(collection(db, 'driveLinks'), (snapshot) => {
       const items = snapshot.docs.map((docSnap) => ({ ...docSnap.data(), id: docSnap.id }));
       setDriveList([...initialDriveList, ...items]);
     });
+
     const unsubTeaching = onSnapshot(collection(db, 'teachings'), (snapshot) => {
       const items = snapshot.docs.map((docSnap) => ({ ...docSnap.data(), id: docSnap.id }));
       setTeachingList([...initialTeachingList, ...items]);
     });
+
     const unsubTesti = onSnapshot(collection(db, 'testimonials'), (snapshot) => {
       const items = snapshot.docs.map((docSnap) => ({ ...docSnap.data(), id: docSnap.id }));
       setTestimonialList([...initialTestimonialList, ...items]);
     });
+
     return () => {
       unsubArc();
       unsubBento();
@@ -201,6 +217,16 @@ export default function MediaSection() {
       unsubTesti();
     };
   }, []);
+
+  // HELPER POUR CALCULER L'ANGLE OBLIQUE (ARC PERSPECTIVE) DYNAMIQUEMENT
+  const getArcTransform = (index, total) => {
+    if (total <= 1) return { rotation: 0, translateY: 0 };
+    const center = (total - 1) / 2;
+    const offset = index - center;
+    const rotation = offset * 6; // Angle d'inclinaison oblique
+    const translateY = Math.abs(offset) * 12; // Courbure de l'arc
+    return { rotation, translateY };
+  };
 
   // HELPER POUR CONVERTIR L'IMAGE LOCALE EN BASE64
   const handleGenericFileChange = (e, setImg, setPreview) => {
@@ -225,6 +251,7 @@ export default function MediaSection() {
       setArcError('Mot de passe incorrect !');
     }
   };
+
   const handleAddArcItem = async (e) => {
     e.preventDefault();
     if (!newArcImg) {
@@ -238,8 +265,6 @@ export default function MediaSection() {
         date: newArcDate || 'Récent',
         desc: newArcDesc,
         img: newArcImg,
-        rotation: 0,
-        translateY: 0,
         createdAt: new Date().toISOString(),
       };
       await addDoc(collection(db, 'arcMedia'), newItem);
@@ -256,6 +281,7 @@ export default function MediaSection() {
       setArcError('Erreur d\'enregistrement Firestore : ' + err.message);
     }
   };
+
   const handleDeleteArcItem = async (id) => {
     try {
       if (typeof id === 'string' && id.startsWith('arc-')) {
@@ -278,6 +304,7 @@ export default function MediaSection() {
       setBentoError('Mot de passe incorrect !');
     }
   };
+
   const handleAddBentoItem = async (e) => {
     e.preventDefault();
     if (!newBentoImg) {
@@ -292,7 +319,7 @@ export default function MediaSection() {
         date: 'Récent',
         desc: newBentoDesc,
         img: newBentoImg,
-        gridSpan: 'md:col-span-1 md:row-span-1',
+        gridSpan: newBentoGridSpan || 'md:col-span-1 md:row-span-1',
         createdAt: new Date().toISOString(),
       };
       await addDoc(collection(db, 'bentoMedia'), newItem);
@@ -309,6 +336,7 @@ export default function MediaSection() {
       setBentoError('Erreur d\'enregistrement Firestore : ' + err.message);
     }
   };
+
   const handleDeleteBentoItem = async (id) => {
     try {
       if (typeof id === 'string' && id.startsWith('bento-')) {
@@ -331,6 +359,7 @@ export default function MediaSection() {
       setCarouselError('Mot de passe incorrect !');
     }
   };
+
   const handleAddCarouselItem = async (e) => {
     e.preventDefault();
     if (!newCarImg) {
@@ -362,6 +391,7 @@ export default function MediaSection() {
       setCarouselError('Erreur d\'enregistrement Firestore : ' + err.message);
     }
   };
+
   const handleDeleteCarouselItem = async (id) => {
     try {
       if (typeof id === 'string' && id.startsWith('scroll-')) {
@@ -384,6 +414,7 @@ export default function MediaSection() {
       setDriveError('Mot de passe incorrect !');
     }
   };
+
   const handleUnlockTeachAdmin = (e) => {
     e.preventDefault();
     if (teachPassword === ADMIN_PASSWORD) {
@@ -393,6 +424,7 @@ export default function MediaSection() {
       setTeachError('Mot de passe incorrect !');
     }
   };
+
   const handleUnlockTestiAdmin = (e) => {
     e.preventDefault();
     if (testiPassword === ADMIN_PASSWORD) {
@@ -402,6 +434,7 @@ export default function MediaSection() {
       setTestiError('Mot de passe incorrect !');
     }
   };
+
   const handleAddDriveLink = async (e) => {
     e.preventDefault();
     try {
@@ -421,6 +454,7 @@ export default function MediaSection() {
       setDriveError('Erreur d\'enregistrement Firestore : ' + err.message);
     }
   };
+
   const handleDeleteDrive = async (id) => {
     try {
       if (typeof id === 'string' && id.startsWith('drive-')) {
@@ -433,6 +467,7 @@ export default function MediaSection() {
       console.error(err);
     }
   };
+
   const handleAddTeaching = async (e) => {
     e.preventDefault();
     try {
@@ -457,6 +492,7 @@ export default function MediaSection() {
       setTeachError('Erreur d\'enregistrement Firestore : ' + err.message);
     }
   };
+
   const handleDeleteTeach = async (id) => {
     try {
       if (typeof id === 'string' && id.startsWith('teach-')) {
@@ -471,6 +507,7 @@ export default function MediaSection() {
       console.error(err);
     }
   };
+
   const handleAddTestimonial = async (e) => {
     e.preventDefault();
     try {
@@ -494,6 +531,7 @@ export default function MediaSection() {
       setTestiError('Erreur d\'enregistrement Firestore : ' + err.message);
     }
   };
+
   const handleDeleteTesti = async (id) => {
     try {
       if (typeof id === 'string' && id.startsWith('testi-')) {
@@ -509,7 +547,7 @@ export default function MediaSection() {
     }
   };
 
-  // TÉLÉCHARGEMENT AVEC REPLI AUTOMATIQUE SI ERREUR CORS (FINALLY CORRIGÉ)
+  // TÉLÉCHARGEMENT AVEC REPLI AUTOMATIQUE
   const handleDownload = async (e, media) => {
     e.stopPropagation();
     setDownloadingId(media.id);
@@ -573,7 +611,7 @@ export default function MediaSection() {
       />
       <div className="max-w-7xl mx-auto space-y-24 relative z-10">
         {/* ==========================================
-        1. HERO & GALERIE ARC 3D
+        1. HERO & GALERIE ARC 3D GLISSABLE
         ========================================== */}
         <motion.div
           initial="hidden"
@@ -604,32 +642,43 @@ export default function MediaSection() {
               Découvrez la vie du Forum FAMOD : séminaires, retraites de couples, ateliers et moments de communion.
             </p>
           </motion.div>
-          {/* ARC PERSPECTIVE */}
+
+          {/* ARC PERSPECTIVE GLISSABLE ET OBLIQUE */}
           <motion.div
             variants={fadeInUp}
-            className="pt-8 pb-12 overflow-x-auto no-scrollbar scroll-smooth flex justify-center items-center min-h-[380px]"
+            ref={arcContainerRef}
+            className="pt-8 pb-12 overflow-hidden w-full relative cursor-grab active:cursor-grabbing min-h-[380px] flex items-center justify-center"
           >
-            <div className="flex items-center justify-center gap-2 sm:gap-4 md:gap-6 min-w-[900px] px-8">
-              {arcList.map((item) => (
-                <motion.div
-                  key={item.id}
-                  whileHover={{ scale: 1.1, rotate: 0, y: -15, zIndex: 30, transition: { duration: 0.3 } }}
-                  onClick={() => setSelectedMedia(item)}
-                  style={{ transform: `rotate(${item.rotation || 0}deg) translateY(${item.translateY || 0}px)` }}
-                  className="relative group cursor-pointer w-44 sm:w-52 h-72 sm:h-80 rounded-3xl overflow-hidden border-2 border-[#D1A977]/20 shadow-2xl transition-all duration-300 shrink-0 bg-[#121212]"
-                >
-                  <ImageOverlayActions media={item} />
-                  <img src={item.img} alt={item.title} referrerPolicy="no-referrer" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 pointer-events-none" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-80 group-hover:opacity-95 transition-opacity" />
-                  <div className="absolute bottom-0 inset-x-0 p-4 text-left space-y-1">
-                    <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-[#D1A977] text-black uppercase tracking-wider">{item.category}</span>
-                    <h3 className="text-sm font-bold text-white line-clamp-1 group-hover:text-[#D1A977] transition-colors">{item.title}</h3>
-                    <p className="text-[11px] text-slate-300 line-clamp-1 font-light">{item.date}</p>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
+            <motion.div
+              ref={arcTrackRef}
+              drag="x"
+              dragConstraints={{ right: 0, left: -arcDragConstraintWidth }}
+              className="flex items-center gap-4 sm:gap-6 px-8 w-max"
+            >
+              {arcList.map((item, index) => {
+                const { rotation, translateY } = getArcTransform(index, arcList.length);
+                return (
+                  <motion.div
+                    key={item.id || index}
+                    whileHover={{ scale: 1.1, rotate: 0, y: -15, zIndex: 30, transition: { duration: 0.3 } }}
+                    onClick={() => setSelectedMedia(item)}
+                    style={{ transform: `rotate(${rotation}deg) translateY(${translateY}px)` }}
+                    className="relative group cursor-pointer w-44 sm:w-52 h-72 sm:h-80 rounded-3xl overflow-hidden border-2 border-[#D1A977]/20 shadow-2xl transition-all duration-300 shrink-0 bg-[#121212]"
+                  >
+                    <ImageOverlayActions media={item} />
+                    <img src={item.img} alt={item.title} referrerPolicy="no-referrer" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 pointer-events-none" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-80 group-hover:opacity-95 transition-opacity" />
+                    <div className="absolute bottom-0 inset-x-0 p-4 text-left space-y-1">
+                      <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-[#D1A977] text-black uppercase tracking-wider">{item.category}</span>
+                      <h3 className="text-sm font-bold text-white line-clamp-1 group-hover:text-[#D1A977] transition-colors">{item.title}</h3>
+                      <p className="text-[11px] text-slate-300 line-clamp-1 font-light">{item.date}</p>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </motion.div>
           </motion.div>
+
           {/* 3 CARTES HIGHLIGHTS CLIQUABLES */}
           <motion.div variants={containerStagger} className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 max-w-5xl mx-auto text-left">
             <motion.div
@@ -651,6 +700,7 @@ export default function MediaSection() {
               <h4 className="text-lg font-bold text-white mb-1 group-hover:text-[#D1A977] transition-colors">Enseignements en Vidéo</h4>
               <p className="text-xs text-slate-400 leading-relaxed">Suivez nos messages vidéo et enseignements sur la vie de couple.</p>
             </motion.div>
+
             <motion.div
               variants={fadeInUp}
               onClick={() => setIsDriveModalOpen(true)}
@@ -669,6 +719,7 @@ export default function MediaSection() {
               <h4 className="text-lg font-bold text-white mb-1 group-hover:text-[#D1A977] transition-colors">Retraites & Événements</h4>
               <p className="text-xs text-slate-400 leading-relaxed">Accédez aux albums photos Google Drive de nos temps forts.</p>
             </motion.div>
+
             <motion.div
               variants={fadeInUp}
               onClick={() => setIsTestimonialModalOpen(true)}
@@ -713,7 +764,7 @@ export default function MediaSection() {
                 variants={scaleIn}
                 whileHover={{ y: -6, transition: { duration: 0.2 } }}
                 onClick={() => setSelectedMedia(card)}
-                className={`group relative rounded-3xl overflow-hidden border border-white/10 hover:border-[#D1A977]/60 shadow-xl cursor-pointer bg-[#121212] ${card.gridSpan || 'md:col-span-1 md:row-span-1'}`}
+                className={`group relative rounded-3xl overflow-hidden border border-white/10 hover:border-[#D1A977]/60 shadow-xl cursor-pointer bg-[#121212] ${card.gridSpan}`}
               >
                 <ImageOverlayActions media={card} />
                 <img src={card.img} alt={card.title} referrerPolicy="no-referrer" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 pointer-events-none" />
@@ -790,7 +841,7 @@ export default function MediaSection() {
         {isArcAdminOpen && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsArcAdminOpen(false)} className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/90 backdrop-blur-md">
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} onClick={(e) => e.stopPropagation()} className="relative w-full max-w-2xl bg-[#121212] border border-[#D1A977]/40 rounded-3xl p-6 sm:p-8 shadow-2xl text-left space-y-6 max-h-[90vh] overflow-y-auto">
-              <button onClick={() => setIsArcAdminOpen(false)} className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/80 text-white hover:text-[#D1A977] border border-white/20 flex items-center justify-center">✕</button>
+              <button onClick={() => setIsArcAdminOpen(false)} className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/80 text-white hover:text-[#D1A977] border border-white/20 flex items-center justify-center"></button>
               <div className="space-y-1">
                 <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-[#D1A977]/10 text-[#D1A977] border border-[#D1A977]/30">Administration</span>
                 <h3 className="text-2xl font-bold text-white">Gestion Galerie Arc 3D</h3>
@@ -878,7 +929,7 @@ export default function MediaSection() {
         {isBentoAdminOpen && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsBentoAdminOpen(false)} className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/90 backdrop-blur-md">
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} onClick={(e) => e.stopPropagation()} className="relative w-full max-w-2xl bg-[#121212] border border-[#D1A977]/40 rounded-3xl p-6 sm:p-8 shadow-2xl text-left space-y-6 max-h-[90vh] overflow-y-auto">
-              <button onClick={() => setIsBentoAdminOpen(false)} className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/80 text-white hover:text-[#D1A977] border border-white/20 flex items-center justify-center">✕</button>
+              <button onClick={() => setIsBentoAdminOpen(false)} className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/80 text-white hover:text-[#D1A977] border border-white/20 flex items-center justify-center"></button>
               <div className="space-y-1">
                 <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-[#D1A977]/10 text-[#D1A977] border border-[#D1A977]/30">Administration</span>
                 <h3 className="text-2xl font-bold text-white">Gestion Bento Grid</h3>
@@ -905,6 +956,12 @@ export default function MediaSection() {
                       <input type="text" placeholder="Identifiant / Titre *" value={newBentoTitle} onChange={(e) => setNewBentoTitle(e.target.value)} required className="px-3 py-2 rounded-xl bg-[#181818] border border-white/10 text-white text-xs focus:outline-none focus:border-[#D1A977]" />
                       <input type="text" placeholder="Sous-titre" value={newBentoSubtitle} onChange={(e) => setNewBentoSubtitle(e.target.value)} className="px-3 py-2 rounded-xl bg-[#181818] border border-white/10 text-white text-xs focus:outline-none focus:border-[#D1A977]" />
                       <input type="text" placeholder="Catégorie" value={newBentoCategory} onChange={(e) => setNewBentoCategory(e.target.value)} className="px-3 py-2 rounded-xl bg-[#181818] border border-white/10 text-white text-xs focus:outline-none focus:border-[#D1A977]" />
+                      <select value={newBentoGridSpan} onChange={(e) => setNewBentoGridSpan(e.target.value)} className="px-3 py-2 rounded-xl bg-[#181818] border border-white/10 text-white text-xs focus:outline-none focus:border-[#D1A977]">
+                        <option value="md:col-span-1 md:row-span-1">Taille normale (1x1)</option>
+                        <option value="md:col-span-2 md:row-span-1">Large (2x1)</option>
+                        <option value="md:col-span-1 md:row-span-2">Haute (1x2)</option>
+                        <option value="md:col-span-2 md:row-span-2">Grande (2x2)</option>
+                      </select>
                     </div>
                     <div className="space-y-2 pt-1">
                       <label className="block text-[11px] font-semibold text-slate-300">Image : Fichier local OU URL</label>
@@ -966,7 +1023,7 @@ export default function MediaSection() {
         {isCarouselAdminOpen && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsCarouselAdminOpen(false)} className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/90 backdrop-blur-md">
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} onClick={(e) => e.stopPropagation()} className="relative w-full max-w-2xl bg-[#121212] border border-[#D1A977]/40 rounded-3xl p-6 sm:p-8 shadow-2xl text-left space-y-6 max-h-[90vh] overflow-y-auto">
-              <button onClick={() => setIsCarouselAdminOpen(false)} className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/80 text-white hover:text-[#D1A977] border border-white/20 flex items-center justify-center">✕</button>
+              <button onClick={() => setIsCarouselAdminOpen(false)} className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/80 text-white hover:text-[#D1A977] border border-white/20 flex items-center justify-center"></button>
               <div className="space-y-1">
                 <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-[#D1A977]/10 text-[#D1A977] border border-[#D1A977]/30">Administration</span>
                 <h3 className="text-2xl font-bold text-white">Gestion du Carrousel Horizontal</h3>
@@ -1055,7 +1112,7 @@ export default function MediaSection() {
         {isDriveModalOpen && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsDriveModalOpen(false)} className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/90 backdrop-blur-md">
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} onClick={(e) => e.stopPropagation()} className="relative w-full max-w-2xl bg-[#121212] border border-[#D1A977]/40 rounded-3xl p-6 sm:p-8 shadow-2xl text-left space-y-6">
-              <button onClick={() => setIsDriveModalOpen(false)} className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/80 text-white hover:text-[#D1A977] border border-white/20 flex items-center justify-center">✕</button>
+              <button onClick={() => setIsDriveModalOpen(false)} className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/80 text-white hover:text-[#D1A977] border border-white/20 flex items-center justify-center"></button>
               <div className="space-y-1">
                 <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-[#D1A977]/10 text-[#D1A977] border border-[#D1A977]/30">Album Événements</span>
                 <h3 className="text-2xl font-bold text-white">Retraites & Événements Photos</h3>
@@ -1074,7 +1131,7 @@ export default function MediaSection() {
                           <h5 className="text-xs font-bold text-white">{item.title}</h5>
                           <span className="text-[10px] text-[#D1A977]">{item.date}</span>
                         </div>
-                        <a href={item.url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="px-3 py-1.5 rounded-lg bg-[#D1A977] hover:bg-[#b89262] text-black text-[11px] font-bold">Ouvrir ↗</a>
+                        <a href={item.url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="px-3 py-1.5 rounded-lg bg-[#D1A977] hover:bg-[#b89262] text-black text-[11px] font-bold">Ouvrir </a>
                       </div>
                     ))}
                   </div>
@@ -1125,7 +1182,7 @@ export default function MediaSection() {
         {isTeachingModalOpen && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsTeachingModalOpen(false)} className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/90 backdrop-blur-md">
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} onClick={(e) => e.stopPropagation()} className="relative w-full max-w-5xl bg-[#121212] border border-[#D1A977]/40 rounded-3xl overflow-hidden shadow-2xl flex flex-col lg:flex-row max-h-[90vh]">
-              <button onClick={() => setIsTeachingModalOpen(false)} className="absolute top-4 right-4 z-30 w-9 h-9 rounded-full bg-black/80 text-white hover:text-[#D1A977] border border-white/20 flex items-center justify-center">✕</button>
+              <button onClick={() => setIsTeachingModalOpen(false)} className="absolute top-4 right-4 z-30 w-9 h-9 rounded-full bg-black/80 text-white hover:text-[#D1A977] border border-white/20 flex items-center justify-center"></button>
               <div className="lg:w-2/3 bg-black flex flex-col justify-center">
                 <div className="relative aspect-video w-full">
                   <iframe src={teachingList[currentTeachingIndex]?.videoUrl} title={teachingList[currentTeachingIndex]?.title} className="w-full h-full border-0" allowFullScreen />
@@ -1207,7 +1264,7 @@ export default function MediaSection() {
         {isTestimonialModalOpen && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsTestimonialModalOpen(false)} className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/90 backdrop-blur-md">
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} onClick={(e) => e.stopPropagation()} className="relative w-full max-w-5xl bg-[#121212] border border-[#D1A977]/40 rounded-3xl overflow-hidden shadow-2xl flex flex-col lg:flex-row max-h-[90vh]">
-              <button onClick={() => setIsTestimonialModalOpen(false)} className="absolute top-4 right-4 z-30 w-9 h-9 rounded-full bg-black/80 text-white hover:text-[#D1A977] border border-white/20 flex items-center justify-center">✕</button>
+              <button onClick={() => setIsTestimonialModalOpen(false)} className="absolute top-4 right-4 z-30 w-9 h-9 rounded-full bg-black/80 text-white hover:text-[#D1A977] border border-white/20 flex items-center justify-center"></button>
               <div className="lg:w-2/3 bg-black flex flex-col justify-center">
                 <div className="relative aspect-video w-full">
                   <iframe src={testimonialList[currentTestimonialIndex]?.videoUrl} title={testimonialList[currentTestimonialIndex]?.title} className="w-full h-full border-0" allowFullScreen />
@@ -1288,7 +1345,7 @@ export default function MediaSection() {
         {selectedMedia && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedMedia(null)} className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/85 backdrop-blur-md">
             <motion.div initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.85, opacity: 0 }} onClick={(e) => e.stopPropagation()} className="relative w-full max-w-4xl bg-[#121212] border border-[#D1A977]/40 rounded-3xl overflow-hidden shadow-2xl text-left max-h-[90vh] flex flex-col md:flex-row">
-              <button onClick={() => setSelectedMedia(null)} className="absolute top-4 right-4 z-30 w-9 h-9 rounded-full bg-black/80 text-white hover:text-[#D1A977] border border-white/20 flex items-center justify-center">✕</button>
+              <button onClick={() => setSelectedMedia(null)} className="absolute top-4 right-4 z-30 w-9 h-9 rounded-full bg-black/80 text-white hover:text-[#D1A977] border border-white/20 flex items-center justify-center"></button>
               
               <div className="md:w-3/5 bg-black flex items-center justify-center">
                 <img src={selectedMedia.img} alt={selectedMedia.title} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
