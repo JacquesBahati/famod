@@ -43,10 +43,94 @@ const scaleIn = {
   visible: { opacity: 1, scale: 1, transition: { duration: 0.5 } },
 };
 
-// --- DATA MEDIAS INITIALES (FALLBACK) ---
-const initialArcMediaCards = [];
-const initialBentoMediaCards = [];
-const initialCarouselMediaCards = [];
+// --- DATA MEDIAS INITIALES (FALLBACK VISIBLE) ---
+const initialArcMediaCards = [
+  {
+    id: 'arc-1',
+    title: 'Atelier de Couple',
+    category: 'Atelier',
+    date: 'Mai 2026',
+    desc: 'Moment d\'échange précieux autour des principes du foyer.',
+    img: Atelier,
+  },
+  {
+    id: 'arc-2',
+    title: 'Grand Événement FAMOD',
+    category: 'Événement',
+    date: 'Juin 2026',
+    desc: 'Rassemblement annuel des familles.',
+    img: evenement,
+  },
+  {
+    id: 'arc-3',
+    title: 'Session Planification',
+    category: 'Séminaire',
+    date: 'Juillet 2026',
+    desc: 'Planification stratégique des activités.',
+    img: planification,
+  },
+];
+
+const initialBentoMediaCards = [
+  {
+    id: 'bento-1',
+    title: 'Ateliers & Formations',
+    subtitle: 'Activité FAMOD',
+    category: 'Atelier',
+    desc: 'Des sessions d\'apprentissage et de partage pour enrichir la vie de couple et renforcer l\'union.',
+    img: Atelier,
+    gridSpan: 'md:col-span-2 md:row-span-1',
+  },
+  {
+    id: 'bento-2',
+    title: 'Événements & Célébrations',
+    subtitle: 'Activité FAMOD',
+    category: 'Événement',
+    desc: 'Des moments uniques de célébration et de communion fraternelle.',
+    img: evenement,
+    gridSpan: 'md:col-span-1 md:row-span-1',
+  },
+  {
+    id: 'bento-3',
+    title: 'Planification & Vision',
+    subtitle: 'Activité FAMOD',
+    category: 'Séminaire',
+    desc: 'Définition des objectifs et projets d\'avenir pour la communauté.',
+    img: planification,
+    gridSpan: 'md:col-span-1 md:row-span-1',
+  },
+  {
+    id: 'bento-4',
+    title: 'Communion & Partage',
+    subtitle: 'Activité FAMOD',
+    category: 'Communion',
+    desc: 'Des temps d\'écoute et de soutien mutuel au sein de la famille.',
+    img: coeur,
+    gridSpan: 'md:col-span-2 md:row-span-1',
+  },
+];
+
+const initialCarouselMediaCards = [
+  {
+    id: 'scroll-1',
+    title: 'Séminaire sur le Foyer',
+    subtitle: 'Conférence',
+    category: 'Événement',
+    date: 'Août 2026',
+    desc: 'Un moment fort d\'enseignement et d\'édification.',
+    img: Atelier,
+  },
+  {
+    id: 'scroll-2',
+    title: 'Rencontre des Familles',
+    subtitle: 'Communion',
+    category: 'Atelier',
+    date: 'Juillet 2026',
+    desc: 'Partage d\'expériences et activités conviviales.',
+    img: evenement,
+  },
+];
+
 const initialDriveList = [];
 const initialTeachingList = [];
 const initialTestimonialList = [];
@@ -55,10 +139,10 @@ export default function MediaSection() {
   const [selectedMedia, setSelectedMedia] = useState(null);
   const [downloadingId, setDownloadingId] = useState(null);
   
-  // LISTES MEDIAS DYNAMIQUES
-  const [arcList, setArcList] = useState(initialArcMediaCards);
-  const [bentoList, setBentoList] = useState(initialBentoMediaCards);
-  const [carouselList, setCarouselList] = useState(initialCarouselMediaCards);
+  // LISTES MEDIAS DYNAMIQUES (Initialisées à null pour éviter le flash)
+  const [arcList, setArcList] = useState(null);
+  const [bentoList, setBentoList] = useState(null);
+  const [carouselList, setCarouselList] = useState(null);
 
   // ADMIN ARC 3D
   const [isArcAdminOpen, setIsArcAdminOpen] = useState(false);
@@ -127,7 +211,7 @@ export default function MediaSection() {
     }
   }, [arcList]);
 
-  // ÉTATS GOOGLE DRIVE
+  // ÉTATS GOOGLE DRIVE & VIDÉOS
   const [isDriveModalOpen, setIsDriveModalOpen] = useState(false);
   const [driveList, setDriveList] = useState(initialDriveList);
   const [selectedDriveIndex, setSelectedDriveIndex] = useState(0);
@@ -139,7 +223,6 @@ export default function MediaSection() {
   const [driveError, setDriveError] = useState('');
   const [driveSuccess, setDriveSuccess] = useState('');
 
-  // ÉTATS ENSEIGNEMENTS VIDÉO
   const [isTeachingModalOpen, setIsTeachingModalOpen] = useState(false);
   const [teachingList, setTeachingList] = useState(initialTeachingList);
   const [currentTeachingIndex, setCurrentTeachingIndex] = useState(0);
@@ -154,7 +237,6 @@ export default function MediaSection() {
   const [teachError, setTeachError] = useState('');
   const [teachSuccess, setTeachSuccess] = useState('');
 
-  // ÉTATS TÉMOIGNAGES VIVANTS VIDÉO
   const [isTestimonialModalOpen, setIsTestimonialModalOpen] = useState(false);
   const [testimonialList, setTestimonialList] = useState(initialTestimonialList);
   const [currentTestimonialIndex, setCurrentTestimonialIndex] = useState(0);
@@ -168,44 +250,55 @@ export default function MediaSection() {
   const [testiError, setTestiError] = useState('');
   const [testiSuccess, setTestiSuccess] = useState('');
 
-  // --- SYNCHRONISATION FIRESTORE EN TEMPS RÉEL ---
+  // --- SYNCHRONISATION FIRESTORE SECURISEE ---
   useEffect(() => {
     const unsubArc = onSnapshot(collection(db, 'arcMedia'), (snapshot) => {
-      const items = snapshot.docs.map((docSnap) => ({ ...docSnap.data(), id: docSnap.id }));
-      setArcList([...initialArcMediaCards, ...items]);
-    });
+      if (!snapshot.empty) {
+        const items = snapshot.docs.map((docSnap) => ({ ...docSnap.data(), id: docSnap.id }));
+        setArcList(items);
+      } else {
+        setArcList(initialArcMediaCards);
+      }
+    }, () => setArcList(initialArcMediaCards));
 
     const unsubBento = onSnapshot(collection(db, 'bentoMedia'), (snapshot) => {
-      const items = snapshot.docs.map((docSnap, index) => {
-        const data = docSnap.data();
-        return {
-          ...data,
-          id: docSnap.id,
-          // Récupère gridSpan depuis Firestore, sinon applique une disposition alternée par défaut
-          gridSpan: data.gridSpan || (index % 3 === 0 ? 'md:col-span-2 md:row-span-1' : 'md:col-span-1 md:row-span-1'),
-        };
-      });
-      setBentoList([...initialBentoMediaCards, ...items]);
-    });
+      if (!snapshot.empty) {
+        const items = snapshot.docs.map((docSnap, index) => {
+          const data = docSnap.data();
+          return {
+            ...data,
+            id: docSnap.id,
+            gridSpan: data.gridSpan || (index % 3 === 0 ? 'md:col-span-2 md:row-span-1' : 'md:col-span-1 md:row-span-1'),
+          };
+        });
+        setBentoList(items);
+      } else {
+        setBentoList(initialBentoMediaCards);
+      }
+    }, () => setBentoList(initialBentoMediaCards));
 
     const unsubCarousel = onSnapshot(collection(db, 'carouselMedia'), (snapshot) => {
-      const items = snapshot.docs.map((docSnap) => ({ ...docSnap.data(), id: docSnap.id }));
-      setCarouselList([...initialCarouselMediaCards, ...items]);
-    });
+      if (!snapshot.empty) {
+        const items = snapshot.docs.map((docSnap) => ({ ...docSnap.data(), id: docSnap.id }));
+        setCarouselList(items);
+      } else {
+        setCarouselList(initialCarouselMediaCards);
+      }
+    }, () => setCarouselList(initialCarouselMediaCards));
 
     const unsubDrive = onSnapshot(collection(db, 'driveLinks'), (snapshot) => {
       const items = snapshot.docs.map((docSnap) => ({ ...docSnap.data(), id: docSnap.id }));
-      setDriveList([...initialDriveList, ...items]);
+      setDriveList(items);
     });
 
     const unsubTeaching = onSnapshot(collection(db, 'teachings'), (snapshot) => {
       const items = snapshot.docs.map((docSnap) => ({ ...docSnap.data(), id: docSnap.id }));
-      setTeachingList([...initialTeachingList, ...items]);
+      setTeachingList(items);
     });
 
     const unsubTesti = onSnapshot(collection(db, 'testimonials'), (snapshot) => {
       const items = snapshot.docs.map((docSnap) => ({ ...docSnap.data(), id: docSnap.id }));
-      setTestimonialList([...initialTestimonialList, ...items]);
+      setTestimonialList(items);
     });
 
     return () => {
@@ -218,17 +311,20 @@ export default function MediaSection() {
     };
   }, []);
 
-  // HELPER POUR CALCULER L'ANGLE OBLIQUE (ARC PERSPECTIVE) DYNAMIQUEMENT
+  // Déterminer les tableaux actifs pour le rendu
+  const activeArcList = arcList || initialArcMediaCards;
+  const activeBentoList = bentoList || initialBentoMediaCards;
+  const activeCarouselList = carouselList || initialCarouselMediaCards;
+
   const getArcTransform = (index, total) => {
     if (total <= 1) return { rotation: 0, translateY: 0 };
     const center = (total - 1) / 2;
     const offset = index - center;
-    const rotation = offset * 6; // Angle d'inclinaison oblique
-    const translateY = Math.abs(offset) * 12; // Courbure de l'arc
+    const rotation = offset * 6;
+    const translateY = Math.abs(offset) * 12;
     return { rotation, translateY };
   };
 
-  // HELPER POUR CONVERTIR L'IMAGE LOCALE EN BASE64
   const handleGenericFileChange = (e, setImg, setPreview) => {
     const file = e.target.files[0];
     if (file) {
@@ -241,7 +337,6 @@ export default function MediaSection() {
     }
   };
 
-  // HANDLERS ARC 3D ADMIN
   const handleUnlockArcAdmin = (e) => {
     e.preventDefault();
     if (arcPassword === ADMIN_PASSWORD) {
@@ -285,7 +380,7 @@ export default function MediaSection() {
   const handleDeleteArcItem = async (id) => {
     try {
       if (typeof id === 'string' && id.startsWith('arc-')) {
-        setArcList((prev) => prev.filter((item) => item.id !== id));
+        setArcList((prev) => (prev ? prev.filter((item) => item.id !== id) : []));
       } else {
         await deleteDoc(doc(db, 'arcMedia', id));
       }
@@ -294,7 +389,6 @@ export default function MediaSection() {
     }
   };
 
-  // HANDLERS BENTO ADMIN
   const handleUnlockBentoAdmin = (e) => {
     e.preventDefault();
     if (bentoPassword === ADMIN_PASSWORD) {
@@ -340,7 +434,7 @@ export default function MediaSection() {
   const handleDeleteBentoItem = async (id) => {
     try {
       if (typeof id === 'string' && id.startsWith('bento-')) {
-        setBentoList((prev) => prev.filter((item) => item.id !== id));
+        setBentoList((prev) => (prev ? prev.filter((item) => item.id !== id) : []));
       } else {
         await deleteDoc(doc(db, 'bentoMedia', id));
       }
@@ -349,7 +443,6 @@ export default function MediaSection() {
     }
   };
 
-  // HANDLERS CARROUSEL ADMIN
   const handleUnlockCarouselAdmin = (e) => {
     e.preventDefault();
     if (carouselPassword === ADMIN_PASSWORD) {
@@ -395,7 +488,7 @@ export default function MediaSection() {
   const handleDeleteCarouselItem = async (id) => {
     try {
       if (typeof id === 'string' && id.startsWith('scroll-')) {
-        setCarouselList((prev) => prev.filter((item) => item.id !== id));
+        setCarouselList((prev) => (prev ? prev.filter((item) => item.id !== id) : []));
       } else {
         await deleteDoc(doc(db, 'carouselMedia', id));
       }
@@ -404,7 +497,6 @@ export default function MediaSection() {
     }
   };
 
-  // OTHER ADMIN HANDLERS
   const handleUnlockDriveAdmin = (e) => {
     e.preventDefault();
     if (drivePassword === ADMIN_PASSWORD) {
@@ -547,7 +639,6 @@ export default function MediaSection() {
     }
   };
 
-  // TÉLÉCHARGEMENT AVEC REPLI AUTOMATIQUE
   const handleDownload = async (e, media) => {
     e.stopPropagation();
     setDownloadingId(media.id);
@@ -603,22 +694,14 @@ export default function MediaSection() {
 
   return (
     <section className="relative min-h-screen bg-[#070707] text-white py-16 px-4 sm:px-6 lg:px-8 overflow-hidden font-sans select-none">
-      {/* Background Glow */}
       <motion.div
         animate={{ scale: [1, 1.2, 1], opacity: [0.15, 0.25, 0.15] }}
         transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
         className="absolute top-10 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#D1A977]/10 rounded-full blur-[120px] pointer-events-none"
       />
       <div className="max-w-7xl mx-auto space-y-24 relative z-10">
-        {/* ==========================================
-        1. HERO & GALERIE ARC 3D GLISSABLE
-        ========================================== */}
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={containerStagger}
-          className="text-center space-y-10"
-        >
+        {/* 1. HERO & GALERIE ARC 3D */}
+        <motion.div initial="hidden" animate="visible" variants={containerStagger} className="text-center space-y-10">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 max-w-4xl mx-auto">
             <motion.div variants={fadeInUp} className="inline-block">
               <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold tracking-widest uppercase bg-[#D1A977]/10 text-[#D1A977] border border-[#D1A977]/30 shadow-sm">
@@ -628,7 +711,7 @@ export default function MediaSection() {
             </motion.div>
             <button
               onClick={() => setIsArcAdminOpen(true)}
-              className="px-3 py-1.5 rounded-xl bg-[#D1A977]/10 hover:bg-[#D1A977] text-[#D1A977] hover:text-black border border-[#D1A977]/40 font-bold text-xs transition-all flex items-center gap-2"
+              className="px-3 py-1.5 rounded-xl bg-[#D1A977]/10 hover:bg-[#D1A977] text-[#D1A977] hover:text-black border border-[#D1A977]/40 font-bold text-xs transition-all flex items-center gap-2 cursor-pointer"
             >
                Admin Arc 3D
             </button>
@@ -643,7 +726,6 @@ export default function MediaSection() {
             </p>
           </motion.div>
 
-          {/* ARC PERSPECTIVE GLISSABLE ET OBLIQUE */}
           <motion.div
             variants={fadeInUp}
             ref={arcContainerRef}
@@ -655,8 +737,8 @@ export default function MediaSection() {
               dragConstraints={{ right: 0, left: -arcDragConstraintWidth }}
               className="flex items-center gap-4 sm:gap-6 px-8 w-max"
             >
-              {arcList.map((item, index) => {
-                const { rotation, translateY } = getArcTransform(index, arcList.length);
+              {activeArcList.map((item, index) => {
+                const { rotation, translateY } = getArcTransform(index, activeArcList.length);
                 return (
                   <motion.div
                     key={item.id || index}
@@ -679,7 +761,6 @@ export default function MediaSection() {
             </motion.div>
           </motion.div>
 
-          {/* 3 CARTES HIGHLIGHTS CLIQUABLES */}
           <motion.div variants={containerStagger} className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 max-w-5xl mx-auto text-left">
             <motion.div
               variants={fadeInUp}
@@ -741,9 +822,7 @@ export default function MediaSection() {
           </motion.div>
         </motion.div>
 
-        {/* ==========================================
-        2. SECTION BENTO GRID
-        ========================================== */}
+        {/* 2. BENTO GRID (SANS CLIGNOTEMENT) */}
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.15 }} variants={containerStagger} className="space-y-10">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 max-w-4xl mx-auto">
             <div className="text-center sm:text-left space-y-2">
@@ -752,28 +831,39 @@ export default function MediaSection() {
             </div>
             <button
               onClick={() => setIsBentoAdminOpen(true)}
-              className="px-3 py-1.5 rounded-xl bg-[#D1A977]/10 hover:bg-[#D1A977] text-[#D1A977] hover:text-black border border-[#D1A977]/40 font-bold text-xs transition-all flex items-center gap-2"
+              className="px-3 py-1.5 rounded-xl bg-[#D1A977]/10 hover:bg-[#D1A977] text-[#D1A977] hover:text-black border border-[#D1A977]/40 font-bold text-xs transition-all flex items-center gap-2 cursor-pointer"
             >
                Admin Bento Grid
             </button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[260px]">
-            {bentoList.map((card) => (
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[260px] min-h-[300px]">
+            {activeBentoList.map((card) => (
               <motion.div
                 key={card.id}
                 variants={scaleIn}
                 whileHover={{ y: -6, transition: { duration: 0.2 } }}
                 onClick={() => setSelectedMedia(card)}
-                className={`group relative rounded-3xl overflow-hidden border border-white/10 hover:border-[#D1A977]/60 shadow-xl cursor-pointer bg-[#121212] ${card.gridSpan}`}
+                className={`group relative rounded-3xl overflow-hidden border border-[#D1A977]/30 hover:border-[#D1A977] shadow-xl cursor-pointer bg-[#181818] ${card.gridSpan}`}
               >
                 <ImageOverlayActions media={card} />
-                <img src={card.img} alt={card.title} referrerPolicy="no-referrer" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 pointer-events-none" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-transparent opacity-90 group-hover:opacity-95 transition-opacity" />
+                
+                {card.img ? (
+                  <img src={card.img} alt={card.title} referrerPolicy="no-referrer" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 pointer-events-none" />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-[#252525] to-[#121212]" />
+                )}
+
+                <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-transparent z-0" />
+                
                 <div className="absolute top-4 left-4 z-10">
-                  <span className="px-3 py-1 rounded-full text-xs font-semibold bg-black/70 text-[#D1A977] border border-[#D1A977]/30 backdrop-blur-md">{card.category}</span>
+                  <span className="px-3 py-1 rounded-full text-xs font-semibold bg-black/80 text-[#D1A977] border border-[#D1A977]/40 backdrop-blur-md">
+                    {card.category || 'FAMOD'}
+                  </span>
                 </div>
-                <div className="absolute bottom-0 inset-x-0 p-6 sm:p-8 space-y-2 z-10">
-                  <p className="text-xs text-[#D1A977] font-medium tracking-wide uppercase">{card.subtitle}</p>
+
+                <div className="absolute bottom-0 inset-x-0 p-6 sm:p-8 space-y-2 z-10 text-left">
+                  <p className="text-xs text-[#D1A977] font-medium tracking-wide uppercase">{card.subtitle || 'Activité'}</p>
                   <h3 className="text-xl sm:text-2xl font-bold text-white group-hover:text-[#D1A977] transition-colors">{card.title}</h3>
                   <p className="text-xs sm:text-sm text-slate-300 line-clamp-2 font-normal leading-relaxed">{card.desc}</p>
                 </div>
@@ -782,9 +872,7 @@ export default function MediaSection() {
           </div>
         </motion.div>
 
-        {/* ==========================================
-        3. CARROUSEL HORIZONTAL AUTOMATIQUE INTERACTIF (DE DROITE À GAUCHE)
-        ========================================== */}
+        {/* 3. CARROUSEL HORIZONTAL */}
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.15 }} variants={containerStagger} className="space-y-8 pt-6 border-t border-white/10">
           <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4">
             <div className="space-y-2 text-left">
@@ -793,7 +881,7 @@ export default function MediaSection() {
             </div>
             <button
               onClick={() => setIsCarouselAdminOpen(true)}
-              className="px-4 py-2 rounded-xl bg-[#D1A977]/10 hover:bg-[#D1A977] text-[#D1A977] hover:text-black border border-[#D1A977]/40 font-bold text-xs transition-all flex items-center gap-2"
+              className="px-4 py-2 rounded-xl bg-[#D1A977]/10 hover:bg-[#D1A977] text-[#D1A977] hover:text-black border border-[#D1A977]/40 font-bold text-xs transition-all flex items-center gap-2 cursor-pointer"
             >
                Gérer le Carrousel (Admin)
             </button>
@@ -813,7 +901,7 @@ export default function MediaSection() {
               whileHover={{ animationPlayState: 'paused' }}
               whileTap={{ animationPlayState: 'paused' }}
             >
-              {[...carouselList, ...carouselList].map((item, index) => (
+              {[...activeCarouselList, ...activeCarouselList].map((item, index) => (
                 <div
                   key={`${item.id}-${index}`}
                   onClick={() => setSelectedMedia(item)}
@@ -834,14 +922,20 @@ export default function MediaSection() {
         </motion.div>
       </div>
 
-      {/* ==========================================
-      MODALE GESTION ADMIN ARC 3D
-      ========================================== */}
+      {/* MODALE ADMIN ARC 3D */}
       <AnimatePresence>
         {isArcAdminOpen && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsArcAdminOpen(false)} className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/90 backdrop-blur-md">
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} onClick={(e) => e.stopPropagation()} className="relative w-full max-w-2xl bg-[#121212] border border-[#D1A977]/40 rounded-3xl p-6 sm:p-8 shadow-2xl text-left space-y-6 max-h-[90vh] overflow-y-auto">
-              <button onClick={() => setIsArcAdminOpen(false)} className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/80 text-white hover:text-[#D1A977] border border-white/20 flex items-center justify-center"></button>
+              <button 
+                onClick={() => setIsArcAdminOpen(false)} 
+                className="absolute top-4 right-4 z-30 w-9 h-9 rounded-full bg-black/80 hover:bg-[#D1A977] text-white hover:text-black border border-white/20 flex items-center justify-center transition-all cursor-pointer"
+                title="Fermer"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
               <div className="space-y-1">
                 <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-[#D1A977]/10 text-[#D1A977] border border-[#D1A977]/30">Administration</span>
                 <h3 className="text-2xl font-bold text-white">Gestion Galerie Arc 3D</h3>
@@ -858,7 +952,7 @@ export default function MediaSection() {
                     className="w-full px-4 py-2.5 rounded-xl bg-[#181818] border border-white/10 text-white text-xs focus:outline-none focus:border-[#D1A977]"
                   />
                   {arcError && <p className="text-xs text-red-400"> {arcError}</p>}
-                  <button type="submit" className="w-full py-2.5 rounded-xl bg-[#D1A977] text-black font-bold text-xs">Déverrouiller</button>
+                  <button type="submit" className="w-full py-2.5 rounded-xl bg-[#D1A977] text-black font-bold text-xs cursor-pointer">Déverrouiller</button>
                 </form>
               ) : (
                 <>
@@ -899,18 +993,18 @@ export default function MediaSection() {
                     <textarea placeholder="Description..." value={newArcDesc} onChange={(e) => setNewArcDesc(e.target.value)} className="w-full px-3 py-2 rounded-xl bg-[#181818] border border-white/10 text-white text-xs h-16 resize-none focus:outline-none focus:border-[#D1A977]" />
                     {arcError && <p className="text-xs text-red-400"> {arcError}</p>}
                     {arcSuccess && <p className="text-xs text-emerald-400"> {arcSuccess}</p>}
-                    <button type="submit" className="w-full py-2.5 rounded-xl bg-[#D1A977] text-black font-bold text-xs">Ajouter l'image</button>
+                    <button type="submit" className="w-full py-2.5 rounded-xl bg-[#D1A977] text-black font-bold text-xs cursor-pointer">Ajouter l'image</button>
                   </form>
                   <div className="space-y-2 pt-2">
                     <h4 className="text-xs font-bold text-slate-400 uppercase">Images actuelles</h4>
                     <div className="max-h-40 overflow-y-auto space-y-2">
-                      {arcList.map((item) => (
+                      {activeArcList.map((item) => (
                         <div key={item.id} className="p-3 rounded-xl bg-[#181818] border border-white/5 flex items-center justify-between text-xs">
                           <div className="flex items-center gap-2 overflow-hidden">
                             <img src={item.img} alt={item.title} referrerPolicy="no-referrer" className="w-8 h-8 rounded object-cover" />
                             <span className="truncate">{item.title}</span>
                           </div>
-                          <button onClick={() => handleDeleteArcItem(item.id)} className="px-2.5 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 text-[11px] font-semibold shrink-0">Supprimer</button>
+                          <button onClick={() => handleDeleteArcItem(item.id)} className="px-2.5 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 text-[11px] font-semibold shrink-0 cursor-pointer">Supprimer</button>
                         </div>
                       ))}
                     </div>
@@ -922,14 +1016,20 @@ export default function MediaSection() {
         )}
       </AnimatePresence>
 
-      {/* ==========================================
-      MODALE GESTION ADMIN BENTO GRID
-      ========================================== */}
+      {/* MODALE ADMIN BENTO GRID */}
       <AnimatePresence>
         {isBentoAdminOpen && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsBentoAdminOpen(false)} className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/90 backdrop-blur-md">
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} onClick={(e) => e.stopPropagation()} className="relative w-full max-w-2xl bg-[#121212] border border-[#D1A977]/40 rounded-3xl p-6 sm:p-8 shadow-2xl text-left space-y-6 max-h-[90vh] overflow-y-auto">
-              <button onClick={() => setIsBentoAdminOpen(false)} className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/80 text-white hover:text-[#D1A977] border border-white/20 flex items-center justify-center"></button>
+              <button 
+                onClick={() => setIsBentoAdminOpen(false)} 
+                className="absolute top-4 right-4 z-30 w-9 h-9 rounded-full bg-black/80 hover:bg-[#D1A977] text-white hover:text-black border border-white/20 flex items-center justify-center transition-all cursor-pointer"
+                title="Fermer"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
               <div className="space-y-1">
                 <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-[#D1A977]/10 text-[#D1A977] border border-[#D1A977]/30">Administration</span>
                 <h3 className="text-2xl font-bold text-white">Gestion Bento Grid</h3>
@@ -946,7 +1046,7 @@ export default function MediaSection() {
                     className="w-full px-4 py-2.5 rounded-xl bg-[#181818] border border-white/10 text-white text-xs focus:outline-none focus:border-[#D1A977]"
                   />
                   {bentoError && <p className="text-xs text-red-400"> {bentoError}</p>}
-                  <button type="submit" className="w-full py-2.5 rounded-xl bg-[#D1A977] text-black font-bold text-xs">Déverrouiller</button>
+                  <button type="submit" className="w-full py-2.5 rounded-xl bg-[#D1A977] text-black font-bold text-xs cursor-pointer">Déverrouiller</button>
                 </form>
               ) : (
                 <>
@@ -993,18 +1093,18 @@ export default function MediaSection() {
                     <textarea placeholder="Description..." value={newBentoDesc} onChange={(e) => setNewBentoDesc(e.target.value)} className="w-full px-3 py-2 rounded-xl bg-[#181818] border border-white/10 text-white text-xs h-16 resize-none focus:outline-none focus:border-[#D1A977]" />
                     {bentoError && <p className="text-xs text-red-400"> {bentoError}</p>}
                     {bentoSuccess && <p className="text-xs text-emerald-400"> {bentoSuccess}</p>}
-                    <button type="submit" className="w-full py-2.5 rounded-xl bg-[#D1A977] text-black font-bold text-xs">Ajouter la carte</button>
+                    <button type="submit" className="w-full py-2.5 rounded-xl bg-[#D1A977] text-black font-bold text-xs cursor-pointer">Ajouter la carte</button>
                   </form>
                   <div className="space-y-2 pt-2">
                     <h4 className="text-xs font-bold text-slate-400 uppercase">Cartes actuelles</h4>
                     <div className="max-h-40 overflow-y-auto space-y-2">
-                      {bentoList.map((item) => (
+                      {activeBentoList.map((item) => (
                         <div key={item.id} className="p-3 rounded-xl bg-[#181818] border border-white/5 flex items-center justify-between text-xs">
                           <div className="flex items-center gap-2 overflow-hidden">
                             <img src={item.img} alt={item.title} referrerPolicy="no-referrer" className="w-8 h-8 rounded object-cover" />
                             <span className="truncate">{item.title}</span>
                           </div>
-                          <button onClick={() => handleDeleteBentoItem(item.id)} className="px-2.5 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 text-[11px] font-semibold shrink-0">Supprimer</button>
+                          <button onClick={() => handleDeleteBentoItem(item.id)} className="px-2.5 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 text-[11px] font-semibold shrink-0 cursor-pointer">Supprimer</button>
                         </div>
                       ))}
                     </div>
@@ -1016,14 +1116,20 @@ export default function MediaSection() {
         )}
       </AnimatePresence>
 
-      {/* ==========================================
-      MODALE GESTION ADMIN CARROUSEL
-      ========================================== */}
+      {/* MODALE ADMIN CARROUSEL */}
       <AnimatePresence>
         {isCarouselAdminOpen && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsCarouselAdminOpen(false)} className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/90 backdrop-blur-md">
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} onClick={(e) => e.stopPropagation()} className="relative w-full max-w-2xl bg-[#121212] border border-[#D1A977]/40 rounded-3xl p-6 sm:p-8 shadow-2xl text-left space-y-6 max-h-[90vh] overflow-y-auto">
-              <button onClick={() => setIsCarouselAdminOpen(false)} className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/80 text-white hover:text-[#D1A977] border border-white/20 flex items-center justify-center"></button>
+              <button 
+                onClick={() => setIsCarouselAdminOpen(false)} 
+                className="absolute top-4 right-4 z-30 w-9 h-9 rounded-full bg-black/80 hover:bg-[#D1A977] text-white hover:text-black border border-white/20 flex items-center justify-center transition-all cursor-pointer"
+                title="Fermer"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
               <div className="space-y-1">
                 <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-[#D1A977]/10 text-[#D1A977] border border-[#D1A977]/30">Administration</span>
                 <h3 className="text-2xl font-bold text-white">Gestion du Carrousel Horizontal</h3>
@@ -1040,7 +1146,7 @@ export default function MediaSection() {
                     className="w-full px-4 py-2.5 rounded-xl bg-[#181818] border border-white/10 text-white text-xs focus:outline-none focus:border-[#D1A977]"
                   />
                   {carouselError && <p className="text-xs text-red-400"> {carouselError}</p>}
-                  <button type="submit" className="w-full py-2.5 rounded-xl bg-[#D1A977] text-black font-bold text-xs">Déverrouiller</button>
+                  <button type="submit" className="w-full py-2.5 rounded-xl bg-[#D1A977] text-black font-bold text-xs cursor-pointer">Déverrouiller</button>
                 </form>
               ) : (
                 <>
@@ -1082,18 +1188,18 @@ export default function MediaSection() {
                     <textarea placeholder="Description..." value={newCarDesc} onChange={(e) => setNewCarDesc(e.target.value)} className="w-full px-3 py-2 rounded-xl bg-[#181818] border border-white/10 text-white text-xs h-16 resize-none focus:outline-none focus:border-[#D1A977]" />
                     {carouselError && <p className="text-xs text-red-400"> {carouselError}</p>}
                     {carouselSuccess && <p className="text-xs text-emerald-400"> {carouselSuccess}</p>}
-                    <button type="submit" className="w-full py-2.5 rounded-xl bg-[#D1A977] text-black font-bold text-xs">Ajouter la carte</button>
+                    <button type="submit" className="w-full py-2.5 rounded-xl bg-[#D1A977] text-black font-bold text-xs cursor-pointer">Ajouter la carte</button>
                   </form>
                   <div className="space-y-2 pt-2">
                     <h4 className="text-xs font-bold text-slate-400 uppercase">Cartes actuelles</h4>
                     <div className="max-h-40 overflow-y-auto space-y-2">
-                      {carouselList.map((item) => (
+                      {activeCarouselList.map((item) => (
                         <div key={item.id} className="p-3 rounded-xl bg-[#181818] border border-white/5 flex items-center justify-between text-xs">
                           <div className="flex items-center gap-2 overflow-hidden">
                             <img src={item.img} alt={item.title} referrerPolicy="no-referrer" className="w-8 h-8 rounded object-cover" />
                             <span className="truncate">{item.title}</span>
                           </div>
-                          <button onClick={() => handleDeleteCarouselItem(item.id)} className="px-2.5 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 text-[11px] font-semibold shrink-0">Supprimer</button>
+                          <button onClick={() => handleDeleteCarouselItem(item.id)} className="px-2.5 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 text-[11px] font-semibold shrink-0 cursor-pointer">Supprimer</button>
                         </div>
                       ))}
                     </div>
@@ -1105,35 +1211,45 @@ export default function MediaSection() {
         )}
       </AnimatePresence>
 
-      {/* ==========================================
-      MODALE GOOGLE DRIVE
-      ========================================== */}
+      {/* MODALE GOOGLE DRIVE */}
       <AnimatePresence>
         {isDriveModalOpen && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsDriveModalOpen(false)} className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/90 backdrop-blur-md">
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} onClick={(e) => e.stopPropagation()} className="relative w-full max-w-2xl bg-[#121212] border border-[#D1A977]/40 rounded-3xl p-6 sm:p-8 shadow-2xl text-left space-y-6">
-              <button onClick={() => setIsDriveModalOpen(false)} className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/80 text-white hover:text-[#D1A977] border border-white/20 flex items-center justify-center"></button>
+              <button 
+                onClick={() => setIsDriveModalOpen(false)} 
+                className="absolute top-4 right-4 z-30 w-9 h-9 rounded-full bg-black/80 hover:bg-[#D1A977] text-white hover:text-black border border-white/20 flex items-center justify-center transition-all cursor-pointer"
+                title="Fermer"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
               <div className="space-y-1">
                 <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-[#D1A977]/10 text-[#D1A977] border border-[#D1A977]/30">Album Événements</span>
                 <h3 className="text-2xl font-bold text-white">Retraites & Événements Photos</h3>
               </div>
               <div className="flex border-b border-white/10 text-xs font-semibold">
-                <button onClick={() => setActiveDriveTab('public')} className={`pb-3 px-4 border-b-2 ${activeDriveTab === 'public' ? 'border-[#D1A977] text-[#D1A977]' : 'border-transparent text-slate-400'}`}> Consultation des Liens</button>
-                <button onClick={() => setActiveDriveTab('admin')} className={`pb-3 px-4 border-b-2 ${activeDriveTab === 'admin' ? 'border-[#D1A977] text-[#D1A977]' : 'border-transparent text-slate-400'}`}> Espace Admin</button>
+                <button onClick={() => setActiveDriveTab('public')} className={`pb-3 px-4 border-b-2 cursor-pointer ${activeDriveTab === 'public' ? 'border-[#D1A977] text-[#D1A977]' : 'border-transparent text-slate-400'}`}> Consultation des Liens</button>
+                <button onClick={() => setActiveDriveTab('admin')} className={`pb-3 px-4 border-b-2 cursor-pointer ${activeDriveTab === 'admin' ? 'border-[#D1A977] text-[#D1A977]' : 'border-transparent text-slate-400'}`}> Espace Admin</button>
               </div>
               {activeDriveTab === 'public' && (
                 <div className="space-y-4">
                   <p className="text-xs text-slate-400">Sélectionnez un événement pour l'ouvrir dans Google Drive :</p>
                   <div className="max-h-60 overflow-y-auto space-y-2 pr-1">
-                    {driveList.map((item, index) => (
-                      <div key={item.id} onClick={() => setSelectedDriveIndex(index)} className={`p-3.5 rounded-xl border cursor-pointer flex items-center justify-between transition-all ${index === selectedDriveIndex ? 'bg-[#D1A977]/15 border-[#D1A977]' : 'bg-[#181818] border-white/5 hover:border-white/20'}`}>
-                        <div>
-                          <h5 className="text-xs font-bold text-white">{item.title}</h5>
-                          <span className="text-[10px] text-[#D1A977]">{item.date}</span>
+                    {driveList.length > 0 ? (
+                      driveList.map((item, index) => (
+                        <div key={item.id} onClick={() => setSelectedDriveIndex(index)} className={`p-3.5 rounded-xl border cursor-pointer flex items-center justify-between transition-all ${index === selectedDriveIndex ? 'bg-[#D1A977]/15 border-[#D1A977]' : 'bg-[#181818] border-white/5 hover:border-white/20'}`}>
+                          <div>
+                            <h5 className="text-xs font-bold text-white">{item.title}</h5>
+                            <span className="text-[10px] text-[#D1A977]">{item.date}</span>
+                          </div>
+                          <a href={item.url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="px-3 py-1.5 rounded-lg bg-[#D1A977] hover:bg-[#b89262] text-black text-[11px] font-bold">Ouvrir </a>
                         </div>
-                        <a href={item.url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="px-3 py-1.5 rounded-lg bg-[#D1A977] hover:bg-[#b89262] text-black text-[11px] font-bold">Ouvrir </a>
-                      </div>
-                    ))}
+                      ))
+                    ) : (
+                      <p className="text-xs text-slate-500 py-4 text-center">Aucun album Google Drive disponible pour le moment.</p>
+                    )}
                   </div>
                 </div>
               )}
@@ -1144,7 +1260,7 @@ export default function MediaSection() {
                       <p className="text-xs text-slate-300">Veuillez vous authentifier pour gérer les albums :</p>
                       <input type="password" placeholder="Mot de passe administrateur" value={drivePassword} onChange={(e) => setDrivePassword(e.target.value)} required className="w-full px-4 py-2.5 rounded-xl bg-[#181818] border border-white/10 text-white text-xs focus:outline-none focus:border-[#D1A977]" />
                       {driveError && <p className="text-xs text-red-400"> {driveError}</p>}
-                      <button type="submit" className="w-full py-2.5 rounded-xl bg-[#D1A977] text-black font-bold text-xs">Déverrouiller la gestion</button>
+                      <button type="submit" className="w-full py-2.5 rounded-xl bg-[#D1A977] text-black font-bold text-xs cursor-pointer">Déverrouiller la gestion</button>
                     </form>
                   ) : (
                     <>
@@ -1153,7 +1269,7 @@ export default function MediaSection() {
                         <input type="text" placeholder="Identifiant / Titre (ex: Cérémonie du 09 août 2026)" value={newDriveTitle} onChange={(e) => setNewDriveTitle(e.target.value)} required className="w-full px-4 py-2.5 rounded-xl bg-[#181818] border border-white/10 text-white text-xs focus:outline-none focus:border-[#D1A977]" />
                         <input type="url" placeholder="Lien Google Drive (https://drive.google.com/...)" value={newDriveUrl} onChange={(e) => setNewDriveUrl(e.target.value)} required className="w-full px-4 py-2.5 rounded-xl bg-[#181818] border border-white/10 text-white text-xs focus:outline-none focus:border-[#D1A977]" />
                         {driveSuccess && <p className="text-xs text-emerald-400"> {driveSuccess}</p>}
-                        <button type="submit" className="w-full py-2.5 rounded-xl bg-[#D1A977] text-black font-bold text-xs">Ajouter l'album</button>
+                        <button type="submit" className="w-full py-2.5 rounded-xl bg-[#D1A977] text-black font-bold text-xs cursor-pointer">Ajouter l'album</button>
                       </form>
                       <div className="space-y-2 pt-2">
                         <h4 className="text-xs font-bold text-slate-400 uppercase">Supprimer un album</h4>
@@ -1161,7 +1277,7 @@ export default function MediaSection() {
                           {driveList.map((item) => (
                             <div key={item.id} className="p-3 rounded-xl bg-[#181818] border border-white/5 flex items-center justify-between text-xs">
                               <span className="truncate pr-2">{item.title}</span>
-                              <button onClick={() => handleDeleteDrive(item.id)} className="px-2.5 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 text-[11px] font-semibold">Supprimer</button>
+                              <button onClick={() => handleDeleteDrive(item.id)} className="px-2.5 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 text-[11px] font-semibold cursor-pointer">Supprimer</button>
                             </div>
                           ))}
                         </div>
@@ -1175,28 +1291,40 @@ export default function MediaSection() {
         )}
       </AnimatePresence>
 
-      {/* ==========================================
-      MODALE ENSEIGNEMENTS VIDÉO
-      ========================================== */}
+      {/* MODALE ENSEIGNEMENTS VIDÉO */}
       <AnimatePresence>
         {isTeachingModalOpen && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsTeachingModalOpen(false)} className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/90 backdrop-blur-md">
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} onClick={(e) => e.stopPropagation()} className="relative w-full max-w-5xl bg-[#121212] border border-[#D1A977]/40 rounded-3xl overflow-hidden shadow-2xl flex flex-col lg:flex-row max-h-[90vh]">
-              <button onClick={() => setIsTeachingModalOpen(false)} className="absolute top-4 right-4 z-30 w-9 h-9 rounded-full bg-black/80 text-white hover:text-[#D1A977] border border-white/20 flex items-center justify-center"></button>
+              <button 
+                onClick={() => setIsTeachingModalOpen(false)} 
+                className="absolute top-4 right-4 z-30 w-9 h-9 rounded-full bg-black/80 hover:bg-[#D1A977] text-white hover:text-black border border-white/20 flex items-center justify-center transition-all cursor-pointer"
+                title="Fermer"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
               <div className="lg:w-2/3 bg-black flex flex-col justify-center">
                 <div className="relative aspect-video w-full">
-                  <iframe src={teachingList[currentTeachingIndex]?.videoUrl} title={teachingList[currentTeachingIndex]?.title} className="w-full h-full border-0" allowFullScreen />
+                  {teachingList.length > 0 ? (
+                    <iframe src={teachingList[currentTeachingIndex]?.videoUrl} title={teachingList[currentTeachingIndex]?.title} className="w-full h-full border-0" allowFullScreen />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-slate-500 text-xs">Aucune vidéo disponible</div>
+                  )}
                 </div>
-                <div className="p-5 text-left space-y-1 bg-[#161616]">
-                  <span className="text-xs font-semibold text-[#D1A977]">{teachingList[currentTeachingIndex]?.speaker} • {teachingList[currentTeachingIndex]?.duration}</span>
-                  <h3 className="text-lg font-bold text-white">{teachingList[currentTeachingIndex]?.title}</h3>
-                  <p className="text-xs text-slate-300">{teachingList[currentTeachingIndex]?.desc}</p>
-                </div>
+                {teachingList.length > 0 && (
+                  <div className="p-5 text-left space-y-1 bg-[#161616]">
+                    <span className="text-xs font-semibold text-[#D1A977]">{teachingList[currentTeachingIndex]?.speaker} • {teachingList[currentTeachingIndex]?.duration}</span>
+                    <h3 className="text-lg font-bold text-white">{teachingList[currentTeachingIndex]?.title}</h3>
+                    <p className="text-xs text-slate-300">{teachingList[currentTeachingIndex]?.desc}</p>
+                  </div>
+                )}
               </div>
               <div className="lg:w-1/3 p-6 bg-[#121212] border-t lg:border-t-0 lg:border-l border-white/10 overflow-y-auto space-y-4 text-left">
                 <div className="flex border-b border-white/10 text-xs font-semibold pb-2 gap-2">
-                  <button onClick={() => setActiveTeachTab('watch')} className={`pb-1 px-2 border-b-2 ${activeTeachTab === 'watch' ? 'border-[#D1A977] text-[#D1A977]' : 'text-slate-400'}`}>Playlist ({teachingList.length})</button>
-                  <button onClick={() => setActiveTeachTab('admin')} className={`pb-1 px-2 border-b-2 ${activeTeachTab === 'admin' ? 'border-[#D1A977] text-[#D1A977]' : 'text-slate-400'}`}> Espace Admin</button>
+                  <button onClick={() => setActiveTeachTab('watch')} className={`pb-1 px-2 border-b-2 cursor-pointer ${activeTeachTab === 'watch' ? 'border-[#D1A977] text-[#D1A977]' : 'text-slate-400'}`}>Playlist ({teachingList.length})</button>
+                  <button onClick={() => setActiveTeachTab('admin')} className={`pb-1 px-2 border-b-2 cursor-pointer ${activeTeachTab === 'admin' ? 'border-[#D1A977] text-[#D1A977]' : 'text-slate-400'}`}> Espace Admin</button>
                 </div>
                 {activeTeachTab === 'watch' && (
                   <div className="space-y-2">
@@ -1222,7 +1350,7 @@ export default function MediaSection() {
                         <p className="text-xs text-slate-300">Accès administrateur requis :</p>
                         <input type="password" placeholder="Mot de passe admin" value={teachPassword} onChange={(e) => setTeachPassword(e.target.value)} required className="w-full p-2.5 rounded-xl bg-[#181818] border border-white/10 text-white text-xs" />
                         {teachError && <p className="text-xs text-red-400"> {teachError}</p>}
-                        <button type="submit" className="w-full py-2 rounded-xl bg-[#D1A977] text-black font-bold text-xs">Se connecter</button>
+                        <button type="submit" className="w-full py-2 rounded-xl bg-[#D1A977] text-black font-bold text-xs cursor-pointer">Se connecter</button>
                       </form>
                     ) : (
                       <>
@@ -1234,7 +1362,7 @@ export default function MediaSection() {
                           <input type="url" placeholder="Lien YouTube" value={newTeachUrl} onChange={(e) => setNewTeachUrl(e.target.value)} required className="w-full p-2 rounded-xl bg-[#181818] border border-white/10 text-white text-xs" />
                           <textarea placeholder="Description de la vidéo..." value={newTeachDesc} onChange={(e) => setNewTeachDesc(e.target.value)} className="w-full p-2 rounded-xl bg-[#181818] border border-white/10 text-white text-xs h-16 resize-none" />
                           {teachSuccess && <p className="text-xs text-emerald-400"> {teachSuccess}</p>}
-                          <button type="submit" className="w-full py-2.5 rounded-xl bg-[#D1A977] text-black font-bold text-xs">Ajouter l'enseignement</button>
+                          <button type="submit" className="w-full py-2.5 rounded-xl bg-[#D1A977] text-black font-bold text-xs cursor-pointer">Ajouter l'enseignement</button>
                         </form>
                         <div className="space-y-2 pt-2">
                           <h4 className="text-xs font-bold text-slate-400 uppercase">Supprimer une vidéo</h4>
@@ -1242,7 +1370,7 @@ export default function MediaSection() {
                             {teachingList.map((vid) => (
                               <div key={vid.id} className="p-3 rounded-xl bg-[#181818] border border-white/5 flex items-center justify-between text-xs">
                                 <span className="truncate pr-2">{vid.title}</span>
-                                <button onClick={() => handleDeleteTeach(vid.id)} className="px-2.5 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 text-[11px] font-semibold">Supprimer</button>
+                                <button onClick={() => handleDeleteTeach(vid.id)} className="px-2.5 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 text-[11px] font-semibold cursor-pointer">Supprimer</button>
                               </div>
                             ))}
                           </div>
@@ -1257,28 +1385,40 @@ export default function MediaSection() {
         )}
       </AnimatePresence>
 
-      {/* ==========================================
-      MODALE TÉMOIGNAGES VIVANTS VIDÉO
-      ========================================== */}
+      {/* MODALE TÉMOIGNAGES VIVANTS VIDÉO */}
       <AnimatePresence>
         {isTestimonialModalOpen && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsTestimonialModalOpen(false)} className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/90 backdrop-blur-md">
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} onClick={(e) => e.stopPropagation()} className="relative w-full max-w-5xl bg-[#121212] border border-[#D1A977]/40 rounded-3xl overflow-hidden shadow-2xl flex flex-col lg:flex-row max-h-[90vh]">
-              <button onClick={() => setIsTestimonialModalOpen(false)} className="absolute top-4 right-4 z-30 w-9 h-9 rounded-full bg-black/80 text-white hover:text-[#D1A977] border border-white/20 flex items-center justify-center"></button>
+              <button 
+                onClick={() => setIsTestimonialModalOpen(false)} 
+                className="absolute top-4 right-4 z-30 w-9 h-9 rounded-full bg-black/80 hover:bg-[#D1A977] text-white hover:text-black border border-white/20 flex items-center justify-center transition-all cursor-pointer"
+                title="Fermer"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
               <div className="lg:w-2/3 bg-black flex flex-col justify-center">
                 <div className="relative aspect-video w-full">
-                  <iframe src={testimonialList[currentTestimonialIndex]?.videoUrl} title={testimonialList[currentTestimonialIndex]?.title} className="w-full h-full border-0" allowFullScreen />
+                  {testimonialList.length > 0 ? (
+                    <iframe src={testimonialList[currentTestimonialIndex]?.videoUrl} title={testimonialList[currentTestimonialIndex]?.title} className="w-full h-full border-0" allowFullScreen />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-slate-500 text-xs">Aucun témoignage disponible</div>
+                  )}
                 </div>
-                <div className="p-5 text-left space-y-1 bg-[#161616]">
-                  <span className="text-xs font-semibold text-[#D1A977]">{testimonialList[currentTestimonialIndex]?.speaker} • {testimonialList[currentTestimonialIndex]?.date}</span>
-                  <h3 className="text-lg font-bold text-white">{testimonialList[currentTestimonialIndex]?.title}</h3>
-                  <p className="text-xs text-slate-300">{testimonialList[currentTestimonialIndex]?.desc}</p>
-                </div>
+                {testimonialList.length > 0 && (
+                  <div className="p-5 text-left space-y-1 bg-[#161616]">
+                    <span className="text-xs font-semibold text-[#D1A977]">{testimonialList[currentTestimonialIndex]?.speaker} • {testimonialList[currentTestimonialIndex]?.date}</span>
+                    <h3 className="text-lg font-bold text-white">{testimonialList[currentTestimonialIndex]?.title}</h3>
+                    <p className="text-xs text-slate-300">{testimonialList[currentTestimonialIndex]?.desc}</p>
+                  </div>
+                )}
               </div>
               <div className="lg:w-1/3 p-6 bg-[#121212] border-t lg:border-t-0 lg:border-l border-white/10 overflow-y-auto space-y-4 text-left">
                 <div className="flex border-b border-white/10 text-xs font-semibold pb-2 gap-2">
-                  <button onClick={() => setActiveTestiTab('watch')} className={`pb-1 px-2 border-b-2 ${activeTestiTab === 'watch' ? 'border-[#D1A977] text-[#D1A977]' : 'text-slate-400'}`}>Témoignages ({testimonialList.length})</button>
-                  <button onClick={() => setActiveTestiTab('admin')} className={`pb-1 px-2 border-b-2 ${activeTestiTab === 'admin' ? 'border-[#D1A977] text-[#D1A977]' : 'text-slate-400'}`}> Espace Admin</button>
+                  <button onClick={() => setActiveTestiTab('watch')} className={`pb-1 px-2 border-b-2 cursor-pointer ${activeTestiTab === 'watch' ? 'border-[#D1A977] text-[#D1A977]' : 'text-slate-400'}`}>Témoignages ({testimonialList.length})</button>
+                  <button onClick={() => setActiveTestiTab('admin')} className={`pb-1 px-2 border-b-2 cursor-pointer ${activeTestiTab === 'admin' ? 'border-[#D1A977] text-[#D1A977]' : 'text-slate-400'}`}> Espace Admin</button>
                 </div>
                 {activeTestiTab === 'watch' && (
                   <div className="space-y-2">
@@ -1304,7 +1444,7 @@ export default function MediaSection() {
                         <p className="text-xs text-slate-300">Accès administrateur requis :</p>
                         <input type="password" placeholder="Mot de passe admin" value={testiPassword} onChange={(e) => setTestiPassword(e.target.value)} required className="w-full p-2.5 rounded-xl bg-[#181818] border border-white/10 text-white text-xs" />
                         {testiError && <p className="text-xs text-red-400"> {testiError}</p>}
-                        <button type="submit" className="w-full py-2 rounded-xl bg-[#D1A977] text-black font-bold text-xs">Se connecter</button>
+                        <button type="submit" className="w-full py-2 rounded-xl bg-[#D1A977] text-black font-bold text-xs cursor-pointer">Se connecter</button>
                       </form>
                     ) : (
                       <>
@@ -1315,7 +1455,7 @@ export default function MediaSection() {
                           <input type="url" placeholder="Lien YouTube" value={newTestiUrl} onChange={(e) => setNewTestiUrl(e.target.value)} required className="w-full p-2 rounded-xl bg-[#181818] border border-white/10 text-white text-xs" />
                           <textarea placeholder="Description du témoignage..." value={newTestiDesc} onChange={(e) => setNewTestiDesc(e.target.value)} className="w-full p-2 rounded-xl bg-[#181818] border border-white/10 text-white text-xs h-16 resize-none" />
                           {testiSuccess && <p className="text-xs text-emerald-400"> {testiSuccess}</p>}
-                          <button type="submit" className="w-full py-2.5 rounded-xl bg-[#D1A977] text-black font-bold text-xs">Ajouter le témoignage</button>
+                          <button type="submit" className="w-full py-2.5 rounded-xl bg-[#D1A977] text-black font-bold text-xs cursor-pointer">Ajouter le témoignage</button>
                         </form>
                         <div className="space-y-2 pt-2">
                           <h4 className="text-xs font-bold text-slate-400 uppercase">Supprimer un témoignage</h4>
@@ -1323,7 +1463,7 @@ export default function MediaSection() {
                             {testimonialList.map((vid) => (
                               <div key={vid.id} className="p-3 rounded-xl bg-[#181818] border border-white/5 flex items-center justify-between text-xs">
                                 <span className="truncate pr-2">{vid.title}</span>
-                                <button onClick={() => handleDeleteTesti(vid.id)} className="px-2.5 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 text-[11px] font-semibold">Supprimer</button>
+                                <button onClick={() => handleDeleteTesti(vid.id)} className="px-2.5 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 text-[11px] font-semibold cursor-pointer">Supprimer</button>
                               </div>
                             ))}
                           </div>
@@ -1338,14 +1478,20 @@ export default function MediaSection() {
         )}
       </AnimatePresence>
 
-      {/* ==========================================
-      LIGHTBOX IMAGE
-      ========================================== */}
+      {/* LIGHTBOX / BOÎTE DE VISUALISATION */}
       <AnimatePresence>
         {selectedMedia && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedMedia(null)} className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/85 backdrop-blur-md">
             <motion.div initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.85, opacity: 0 }} onClick={(e) => e.stopPropagation()} className="relative w-full max-w-4xl bg-[#121212] border border-[#D1A977]/40 rounded-3xl overflow-hidden shadow-2xl text-left max-h-[90vh] flex flex-col md:flex-row">
-              <button onClick={() => setSelectedMedia(null)} className="absolute top-4 right-4 z-30 w-9 h-9 rounded-full bg-black/80 text-white hover:text-[#D1A977] border border-white/20 flex items-center justify-center"></button>
+              <button 
+                onClick={() => setSelectedMedia(null)} 
+                className="absolute top-4 right-4 z-30 w-9 h-9 rounded-full bg-black/80 hover:bg-[#D1A977] text-white hover:text-black border border-white/20 flex items-center justify-center transition-all cursor-pointer"
+                title="Fermer"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
               
               <div className="md:w-3/5 bg-black flex items-center justify-center">
                 <img src={selectedMedia.img} alt={selectedMedia.title} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
@@ -1356,7 +1502,7 @@ export default function MediaSection() {
                   <h3 className="text-2xl font-bold text-white">{selectedMedia.title}</h3>
                   <p className="text-slate-300 text-sm">{selectedMedia.desc}</p>
                 </div>
-                <button onClick={(e) => handleDownload(e, selectedMedia)} className="w-full py-2.5 rounded-xl bg-[#D1A977] text-black text-xs font-semibold">
+                <button onClick={(e) => handleDownload(e, selectedMedia)} className="w-full py-2.5 rounded-xl bg-[#D1A977] text-black text-xs font-semibold hover:bg-[#b89262] transition-colors cursor-pointer">
                   {downloadingId === selectedMedia.id ? 'Téléchargement...' : 'Télécharger l\'image'}
                 </button>
               </div>
