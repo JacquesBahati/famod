@@ -34,27 +34,45 @@ export default function AIChatbot() {
   Construire une famille heureuse, modèle, stable et durable
   Et y promouvoir le bonheur basé sur l’amour, la compassion et la justice du Christ.
 
-  ---  VISION---
+  --- VISION ---
   Une famille heureuse et modèle
   Qui glorifie Christ à travers son témoignage, son unité et son épanouissement au quotidien.
 
-  ---MÉTHODOLOGIE---
+  --- MÉTHODOLOGIE ---
   Accompagnement Tri-dimensionnel
   Un soutien complet spirituel, psychologique et social personnalisé adapté aux besoins des couples.
 
-  --ORIGINE DU FORUM---
+  -- ORIGINE DU FORUM ---
   Combattre les vents de divorce dans cette génération et entretenir l’amour, la stabilité à tous égard
   
   --- RÈGLES STRICTES DE RÉPONSE ---
   1. RÉPONSES COURTES : Reste très concis ! Tes réponses ne doivent PAS dépasser 2 à 4 phrases maximum.
-  2. STYLE CHATBOT : Adopte un ton direct, chaleureux et dynamique. Évite les longs paragraphes.
+  2. STYLE CHATBOT : Adopte un ton direct, chaleureux et dynamique. Évite les longs parachraphes.
   3. STRUCTURE : Si tu dois lister des choses, utilise des puces simples au lieu de faire du texte continu.
   4. REDIRECTION : Pour les cas complexes ou la prise de RDV, ne fais pas de longs discours, redirige vers la page /contact.
-
+  
+  RÈGLES STRICTES DE RÉPONSE :
+    - Sois ULTRA CONCIS. Réponds en 1 à 2 phrases courtes MAXIMUM.
+    - Va droit au but, pas de formules d'intros inutiles ou de longs paragraphes.
+    - Si l'utilisateur demande un suivi, un accompagnement ou un rdv, dis-lui simplement d'aller sur la page /contact.
+    - Ton : chaleureux, direct, bienveillant.
+  
   `;
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
+
+    // Récupération de la clé depuis les variables d'environnement (.env)
+    const apiKey = import.meta.env.VITE_GROQ_API_KEY;
+
+    if (!apiKey) {
+      console.error("Clé API Groq manquante dans le fichier .env");
+      setMessages(prev => [
+        ...prev, 
+        { role: 'assistant', content: 'Désolé, la clé API n’est pas configurée correctement.' }
+      ]);
+      return;
+    }
 
     const userMessage = { role: 'user', content: input };
     const updatedMessages = [...messages, userMessage];
@@ -64,16 +82,14 @@ export default function AIChatbot() {
     setIsLoading(true);
 
     try {
-      // API 100% GRATUITE DE GROQ
       const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // 👇 REMPLACE CETTE CLÉ PAR TA CLÉ GROQ (gsk_...)
-          'Authorization': 'Bearer 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'
+          'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          model: 'llama-3.1-8b-instant', // Modèle gratuit, fluide et ultra-rapide
+          model: 'llama-3.1-8b-instant',
           messages: [
             { role: 'system', content: famodContext },
             ...updatedMessages
@@ -83,17 +99,18 @@ export default function AIChatbot() {
 
       const data = await response.json();
 
-      if (data.choices && data.choices[0]) {
+      if (response.ok && data.choices && data.choices[0]) {
         const assistantMessage = { role: 'assistant', content: data.choices[0].message.content };
         setMessages(prev => [...prev, assistantMessage]);
       } else {
-        throw new Error(data.error?.message || "Erreur de réponse");
+        console.error("Erreur API Groq :", data);
+        throw new Error(data.error?.message || "Erreur lors du traitement de la requête.");
       }
     } catch (error) {
-      console.error("Erreur Chatbot:", error);
+      console.error("Erreur Chatbot :", error);
       setMessages(prev => [
         ...prev, 
-        { role: 'assistant', content: 'Désolé, une erreur technique est survenue.' }
+        { role: 'assistant', content: 'Désolé, une erreur technique est survenue. Réessayez plus tard.' }
       ]);
     } finally {
       setIsLoading(false);
@@ -116,10 +133,11 @@ export default function AIChatbot() {
         </svg>
       </button>
       <p 
-      onClick={() => setIsOpen(!isOpen)}
-      className="fixed backdrop-blur-md bottom-6 right-12 w-29 h-14 bg-[#d9a86f00] rounded-2xl text-left shadow-2xl flex items-center  text-[#fcffff] z-49 cursor-pointer hover:scale-105 pl-3.5 border-l-2 border-[#D9A76F] transition-transform"
+        onClick={() => setIsOpen(!isOpen)}
+        className="fixed backdrop-blur-md bottom-6 right-12 w-29 h-14 bg-[#d9a86f00] rounded-2xl text-left shadow-2xl flex items-center text-[#fcffff] z-49 cursor-pointer hover:scale-105 pl-3.5 border-l-2 border-[#D9A76F] transition-transform"
       > 
-      discuter</p>
+        discuter
+      </p>
 
       {/* Fenêtre de Chat */}
       <AnimatePresence>
